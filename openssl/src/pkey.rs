@@ -53,6 +53,7 @@ use crate::dh::Dh;
 use crate::dsa::Dsa;
 use crate::ec::EcKey;
 use crate::error::ErrorStack;
+use crate::nid::Nid;
 use crate::rsa::Rsa;
 #[cfg(ossl110)]
 use crate::symm::Cipher;
@@ -87,6 +88,8 @@ impl Id {
     pub const X25519: Id = Id(ffi::EVP_PKEY_X25519);
     #[cfg(ossl111)]
     pub const X448: Id = Id(ffi::EVP_PKEY_X448);
+    #[cfg(ossl111)]
+    pub const SM2: Id = Id(ffi::EVP_PKEY_SM2);
 
     /// Creates a `Id` from an integer representation.
     pub fn from_raw(value: c_int) -> Id {
@@ -385,6 +388,14 @@ impl<T> PKey<T> {
             ))?;
             mem::forget(ec_key);
             Ok(pkey)
+        }
+    }
+    #[cfg(ossl111)]
+    pub fn set_alias_type(&mut self, nid: Nid) -> Result<(), ErrorStack> {
+        unsafe {
+            let pkey = self.as_ptr() as *mut ffi::EVP_PKEY;
+            cvt(ffi::EVP_PKEY_set_alias_type(pkey, nid.as_raw()))?;
+            Ok(())
         }
     }
 }

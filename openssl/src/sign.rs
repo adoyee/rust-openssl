@@ -63,7 +63,7 @@
 //! ```
 use cfg_if::cfg_if;
 use foreign_types::ForeignTypeRef;
-use libc::c_int;
+use libc::{c_int, c_void};
 use std::io::{self, Write};
 use std::marker::PhantomData;
 use std::ptr;
@@ -153,6 +153,54 @@ impl<'a> Signer<'a> {
         T: HasPrivate,
     {
         Self::new_intern(None, pkey)
+    }
+
+    /// Creates a new `Signer` with an id.
+    ///
+    ///
+    /// This is the only way to create a `Signer` for SM2 keys.
+    ///
+    /// OpenSSL documentation at [`SM2`].
+    ///
+    /// [`SM2`]: https://www.openssl.org/docs/manmaster/man7/SM2.html
+    #[cfg(ossl111)]
+    pub fn new_with_id<T>(
+        type_: MessageDigest,
+        pkey: &'a PKeyRef<T>,
+        id: &[u8],
+    ) -> Result<Signer<'a>, ErrorStack>
+    where
+        T: HasPrivate,
+    {
+        unsafe {
+            ffi::init();
+
+            let ctx = cvt_p(EVP_MD_CTX_new())?;
+            let pctx = cvt_p(ffi::EVP_PKEY_CTX_new(pkey.as_ptr(), ptr::null_mut()))?;
+            cvt(ffi::EVP_PKEY_CTX_set1_id(
+                pctx,
+                id.as_ptr() as *const c_void,
+                id.len(),
+            ))?;
+            ffi::EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+            let r = ffi::EVP_DigestSignInit(
+                ctx,
+                ptr::null_mut(),
+                type_.as_ptr(),
+                ptr::null_mut(),
+                pkey.as_ptr(),
+            );
+            if r != 1 {
+                EVP_MD_CTX_free(ctx);
+                return Err(ErrorStack::get());
+            }
+
+            Ok(Signer {
+                md_ctx: ctx,
+                pctx,
+                _p: PhantomData,
+            })
+        }
     }
 
     fn new_intern<T>(
@@ -444,6 +492,45 @@ impl<'a> Verifier<'a> {
         T: HasPublic,
     {
         Verifier::new_intern(None, pkey)
+    }
+
+    pub fn new_with_id<T>(
+        type_: MessageDigest,
+        pkey: &'a PKeyRef<T>,
+        id: &[u8],
+    ) -> Result<Verifier<'a>, ErrorStack>
+    where
+        T: HasPublic,
+    {
+        unsafe {
+            ffi::init();
+
+            let ctx = cvt_p(EVP_MD_CTX_new())?;
+            let mut pctx = cvt_p(ffi::EVP_PKEY_CTX_new(pkey.as_ptr(), ptr::null_mut()))?;
+            cvt(ffi::EVP_PKEY_CTX_set1_id(
+                pctx,
+                id.as_ptr() as *const c_void,
+                id.len(),
+            ))?;
+            ffi::EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+            let r = ffi::EVP_DigestVerifyInit(
+                ctx,
+                &mut pctx,
+                type_.as_ptr(),
+                ptr::null_mut(),
+                pkey.as_ptr(),
+            );
+            if r != 1 {
+                EVP_MD_CTX_free(ctx);
+                return Err(ErrorStack::get());
+            }
+
+            Ok(Verifier {
+                md_ctx: ctx,
+                pctx,
+                pkey_pd: PhantomData,
+            })
+        }
     }
 
     fn new_intern<T>(

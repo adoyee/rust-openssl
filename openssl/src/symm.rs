@@ -280,6 +280,31 @@ impl Cipher {
         unsafe { Cipher(ffi::EVP_chacha20_poly1305()) }
     }
 
+    #[cfg(ossl111)]
+    pub fn sm4_ecb() -> Cipher {
+        unsafe { Cipher(ffi::EVP_sm4_ecb()) }
+    }
+
+    #[cfg(ossl111)]
+    pub fn sm4_cbc() -> Cipher {
+        unsafe { Cipher(ffi::EVP_sm4_cbc()) }
+    }
+
+    #[cfg(ossl111)]
+    pub fn sm4_ctr() -> Cipher {
+        unsafe { Cipher(ffi::EVP_sm4_ctr()) }
+    }
+
+    #[cfg(ossl111)]
+    pub fn sm4_cfb128() -> Cipher {
+        unsafe { Cipher(ffi::EVP_sm4_cfb128()) }
+    }
+
+    #[cfg(ossl111)]
+    pub fn sm4_ofb() -> Cipher {
+        unsafe { Cipher(ffi::EVP_sm4_ofb()) }
+    }
+
     /// Creates a `Cipher` from a raw pointer to its OpenSSL type.
     ///
     /// # Safety

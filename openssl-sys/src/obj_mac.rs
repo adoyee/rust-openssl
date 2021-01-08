@@ -920,3 +920,24 @@ pub const NID_X448: c_int = 1035;
 pub const NID_ED25519: c_int = 1087;
 #[cfg(ossl111)]
 pub const NID_ED448: c_int = 1088;
+
+#[cfg(ossl111)]
+pub const NID_sm2: c_int = 1172;
+#[cfg(ossl111)]
+pub const NID_sm3: c_int = 1143;
+#[cfg(ossl111)]
+pub const NID_sm3WithRSAEncryption: c_int = 1144;
+#[cfg(ossl111)]
+pub const NID_sm4_ecb: c_int = 1133;
+#[cfg(ossl111)]
+pub const NID_sm4_cbc: c_int = 1134;
+#[cfg(ossl111)]
+pub const NID_sm4_ofb128: c_int = 1135;
+#[cfg(ossl111)]
+pub const NID_sm4_cfb128: c_int = 1137;
+#[cfg(ossl111)]
+pub const NID_sm4_cfb1: c_int = 1136;
+#[cfg(ossl111)]
+pub const NID_sm4_cfb8: c_int = 1138;
+#[cfg(ossl111)]
+pub const NID_sm4_ctr: c_int = 1139;
